@@ -33,7 +33,7 @@ public class DiretorioCC {
     }
     
     public static void main(String[] args){
-        DiretorioCC dir = new DiretorioCC("\\DatasetsArtificiais\\Fuzzy\\Graduais");
+        DiretorioCC dir = new DiretorioCC("\\DatasetsArtificiais\\Fuzzy\\Abruptos");
         System.out.println(dir.problemas());
     }
                   

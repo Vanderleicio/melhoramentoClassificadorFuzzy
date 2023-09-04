@@ -92,15 +92,11 @@ public class ExcelCC {
         Cell cabecalho3 = row.createCell(3);
         cabecalho3.setCellValue("Desvio");
         Cell cabecalho4 = row.createCell(4);
-        cabecalho4.setCellValue("Media Idade");
+        cabecalho4.setCellValue("Regras Descartadas");
         Cell cabecalho5 = row.createCell(5);
         cabecalho5.setCellValue("Media Utilidade");
         Cell cabecalho6 = row.createCell(6);
-        cabecalho6.setCellValue("Desvio padrão Idade");
-        Cell cabecalho7 = row.createCell(7);
-        cabecalho7.setCellValue("Desvio padrão Utilidade");
-        Cell cabecalho9 = row.createCell(9);
-        cabecalho9.setCellValue("Desvios Detectados");
+        cabecalho6.setCellValue("Desvio padrão Utilidade");
 
         
         salvar();
@@ -108,7 +104,7 @@ public class ExcelCC {
 
     
 
-    public void criarCelulas(double gMean, double interp, String desvio, int regras, double mediaIdade, double mediaUtilidade, double desvioIdade, double desvioUtilidade) {
+    public void criarCelulas(double gMean, double interp, String desvio, int regras, int regrasDescartadas, double mediaUtilidade, double desvioUtilidade) {
         int rownum = folha.getPhysicalNumberOfRows();
         row = folha.createRow(rownum++);
         
@@ -125,16 +121,13 @@ public class ExcelCC {
         colunaD.setCellValue(desvio);
         
         Cell colunaE = row.createCell(4);
-        colunaE.setCellValue(mediaIdade);
+        colunaE.setCellValue(regrasDescartadas);
         
         Cell colunaF = row.createCell(5);
         colunaF.setCellValue(mediaUtilidade);
         
         Cell colunaG = row.createCell(6);
-        colunaG.setCellValue(desvioIdade);
-        
-        Cell colunaH = row.createCell(7);
-        colunaH.setCellValue(desvioUtilidade);
+        colunaG.setCellValue(desvioUtilidade);
         
         salvar();
         

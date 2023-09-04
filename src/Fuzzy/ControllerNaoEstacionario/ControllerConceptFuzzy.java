@@ -5,7 +5,6 @@
  */
 package Fuzzy.ControllerNaoEstacionario;
 
-import Fuzzy.Model.Resultado;
 import Fuzzy.BaseConhecimento.WangMendel;
 import Fuzzy.ArquivoFLC.FormateCC;
 import Fuzzy.Raciocínio.Classico;
@@ -78,58 +77,60 @@ public class ControllerConceptFuzzy {
 
 			//System.out.println(formate.jLogicFuzzy);
 			metricaAcumulada = 0;
-				//Para o modelo Fuzzy:
-				int nRegras = 0;
-				nomeClassif = "Fuzzy";
-				FormateCC formate = new FormateCC();
-				dataset.extrair(caminho);
-				formate.gerarFLC(dataset);
-				FIS fis = FIS.createFromString(formate.jLogicFuzzy, true);
+			
+			//Para o modelo Fuzzy:
+			int nRegras = 0;
+			nomeClassif = "Fuzzy";
+			FormateCC formate = new FormateCC();
+			System.out.println(caminho);
+			dataset.extrair(caminho);
+			formate.gerarFLC(dataset);
+			FIS fis = FIS.createFromString(formate.jLogicFuzzy, true);
+			
+			List<Instancia> instanciasAtuais;
+			
+			String pastaDeResultados = "FUZZY-" + dataset.nomeArquivo;
+			excel = new ExcelCC(pastaDeResultados, dataset.qtdElemJanelas, "SAG" + drift.detectorNames[DriftController.detector_atual] + "-" + metricaUsada.getNome() + "-" + nomeCenario);
+			excel.criarCabecalho();
+			//Primeira Classificação
+			System.out.println(dataset.nomeArquivo);
+			System.out.println("Construindo Primeiro Sistema Fuzzy");
+			
+			boolean multiclasses = dataset.nomesClasses.size() > 2; //Avalia se o dataset tem multiplas classes para o processo de avaliação da performance
+			
+			instanciasAtuais = new ArrayList<Instancia>((List<Instancia>) dataset.janelas.get(0));
+			WangMendel wm = new WangMendel(formate.jLogicFuzzy, instanciasAtuais, dataset.nomesCaracteristicas, dataset.nomesDiscretos);
+			wm.criarRegras(0);
+			melhoresRegras = wm.regras;
+			nRegras = melhoresRegras.size();
+			for (int indiceJanela = 1; indiceJanela < dataset.janelas.size(); indiceJanela++) {
 				
-				List<Instancia> instanciasAtuais;
-				
-				String pastaDeResultados = "FUZZY-" + dataset.nomeArquivo;
-				excel = new ExcelCC(pastaDeResultados, dataset.qtdElemJanelas, "SAG" + drift.detectorNames[DriftController.detector_atual] + "-" + metricaUsada.getNome() + "-" + nomeCenario);
-				excel.criarCabecalho();
-				//Primeira Classificação
-				System.out.println(dataset.nomeArquivo);
-				System.out.println("Construindo Primeiro Sistema Fuzzy");
-				
-				boolean multiclasses = dataset.nomesClasses.size() > 2; //Avalia se o dataset tem multiplas classes para o processo de avaliação da performance
-				
-				instanciasAtuais = new ArrayList<Instancia>((List<Instancia>) dataset.janelas.get(0));
-				WangMendel wm = new WangMendel(formate.jLogicFuzzy, instanciasAtuais, dataset.nomesCaracteristicas, dataset.nomesDiscretos);
-				wm.criarRegras(0);
-				melhoresRegras = wm.regras;
-				nRegras = melhoresRegras.size();
-				for (int indiceJanela = 1; indiceJanela < dataset.janelas.size(); indiceJanela++) {
-					
-					teste = new Classico(wm.fis, melhoresRegras, (List<Instancia>) dataset.janelas.get(indiceJanela), dataset.nomesCaracteristicas);
-					metrica = teste.classificar(desbalanceado, multiclasses, dataset.nomesDiscretos, metricaUsada);
-					metricaAcumulada += metrica;
-					InterpSAG = teste.interpretabilidade();
+				teste = new Classico(wm.fis, melhoresRegras, (List<Instancia>) dataset.janelas.get(indiceJanela), dataset.nomesCaracteristicas);
+				metrica = teste.classificar(desbalanceado, multiclasses, dataset.nomesDiscretos, metricaUsada);
+				metricaAcumulada += metrica;
+				InterpSAG = teste.interpretabilidade();
 
-					System.out.println("Bloco: " + indiceJanela + ", " + metricaUsada.getNome() + ": " + metrica + ", Regras: " + nRegras);
-					teveDesvio = drift.detectar(metrica);
+				System.out.println("Bloco: " + indiceJanela + ", " + metricaUsada.getNome() + ": " + metrica + ", Regras: " + nRegras);
+				teveDesvio = drift.detectar(metrica);
 
-					if(teveDesvio) {
-						parametros = wm.calcularEstatisticas(indiceJanela);
-					} 
-					
-					excel.criarCelulas(metrica, InterpSAG, teveDesvio? "Desviou": "----", nRegras, parametros[0], parametros[1], parametros[2], parametros[3]);
-					//excel.criarCelulas(metrica, InterpSAG, teveDesvio? "Desviou": "----", nRegras, 0, 0, 0, 0);
-					instanciasAtuais = new ArrayList<Instancia>((List<Instancia>) dataset.janelas.get(indiceJanela));
-					if(teveDesvio) {
-						qtdDesvio++;
-						System.out.println("Teve desvio");
-						wm = new WangMendel(formate.jLogicFuzzy, instanciasAtuais, dataset.nomesCaracteristicas, dataset.nomesDiscretos);
-	                    wm.criarRegras(indiceJanela);
-						melhoresRegras = wm.regras;
-						nRegras = melhoresRegras.size();
-					}
-					
+				if(teveDesvio) {
+					parametros = wm.calcularEstatisticas(indiceJanela);
+				} 
+				
+				excel.criarCelulas(metrica, InterpSAG, teveDesvio? "Desviou": "----", nRegras, 0, parametros[1], parametros[3]);
+				//excel.criarCelulas(metrica, InterpSAG, teveDesvio? "Desviou": "----", nRegras, 0, 0, 0, 0);
+				instanciasAtuais = new ArrayList<Instancia>((List<Instancia>) dataset.janelas.get(indiceJanela));
+				if(teveDesvio) {
+					qtdDesvio++;
+					System.out.println("Teve desvio");
+					wm = new WangMendel(formate.jLogicFuzzy, instanciasAtuais, dataset.nomesCaracteristicas, dataset.nomesDiscretos);
+                    wm.criarRegras(indiceJanela);
+					melhoresRegras = wm.regras;
+					nRegras = melhoresRegras.size();
 				}
-				drift.resetarDeteccao();
+				
+			}
+			drift.resetarDeteccao();
 
 			
 			
@@ -152,25 +153,6 @@ public class ControllerConceptFuzzy {
 		Classico teste;
 		double[] parametros = {0, 0, 0, 0};
 		double[] resetParam = {0, 0, 0, 0};
-		
-		switch(cenarioFS) {
-			case 2: // Força de ativação é a TNorma
-				WangMendel.tnormaComoFS = true;
-				mediaTodaJanela = false;
-				break;
-			case 3:
-				WangMendel.tnormaComoFS = true;
-				mediaTodaJanela = true;
-				break;
-			case 0: // A força de ativação é calculada com base na fórmula de (2008 Angeloz and Zhou)
-				WangMendel.tnormaComoFS = false;
-				mediaTodaJanela = false;
-				break;
-			case 1:
-				WangMendel.tnormaComoFS = false;
-				mediaTodaJanela = true;
-				break;
-		}
 		
 		DiretorioCC dir = new DiretorioCC(tipoDoDataset);
 		Iterator exemplos = dir.problemas().iterator();
@@ -223,6 +205,7 @@ public class ControllerConceptFuzzy {
 			nRegras = melhoresRegras.size();
 			
 			for (int indiceJanela = 1; indiceJanela < dataset.janelas.size(); indiceJanela++) {
+				int regrasDescartadas = 0;
 				wm.atualizarUtilidade(indiceJanela);
 				
 				if (mediaTodaJanela){
@@ -241,16 +224,23 @@ public class ControllerConceptFuzzy {
 				
 				if (teveDesvio) {
 					System.out.println("Teve Desvio");
+					
+					if (cenarioFS == 0) {
+						regrasDescartadas = wm.atualizarBase();
+					}
 					parametros = wm.calcularEstatisticas(indiceJanela);
 					qtdDesvio++;
 					wm.setNovasInstancias(instanciasAtuais, indiceJanela);
 					wm.criarRegras(indiceJanela);
-					//wm.atualizarBase(indiceJanela);
+					
+					if (cenarioFS == 1) {
+						regrasDescartadas = wm.atualizarBase();
+					}
 					melhoresRegras = wm.regras;
 					nRegras = melhoresRegras.size();
 				}
 				
-				excel.criarCelulas(metrica, InterpSAG, teveDesvio? "Desviou": "----", nRegras, parametros[0], parametros[1], parametros[2], parametros[3]);
+				excel.criarCelulas(metrica, InterpSAG, teveDesvio? "Desviou": "----", nRegras, regrasDescartadas, parametros[1], parametros[3]);
 				instanciasAtuais = new ArrayList<Instancia>((List<Instancia>) dataset.janelas.get(indiceJanela));
 				parametros = resetParam;
 				

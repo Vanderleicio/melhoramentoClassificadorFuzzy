@@ -11,7 +11,6 @@ import Fuzzy.ControllerNaoEstacionario.Metricas;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import javax.swing.text.html.HTMLDocument;
 import net.sourceforge.jFuzzyLogic.FIS;
 
 /**
@@ -27,8 +26,6 @@ public class Classico {
     public List<Integer> gabarito;
     public List<Integer> resultadoClassificacao;
     public List<Double> scores;
-    public static boolean variavelTeste = false;
-    public static boolean tnormaSempre;
     
     public Classico(FIS fis, List<Regra> regras, List<Instancia> instancias, List<String> variaveis){
         this.fis = fis;
@@ -50,8 +47,6 @@ public class Classico {
             this.gabarito.add(instancia.classe);
             int classificacao = -1;
             double maiorTnorma = -1;
-            int cont = 0;
-            int posRegraUsada = 0;
             for (Regra regra : this.regras){
                 double tnorma = 1;
                 Iterator var = this.variaveis.iterator();
@@ -80,21 +75,14 @@ public class Classico {
                         tnorma *= fis.getVariable(variavel).getMembership(terms.get(indiceTermo));
                     	}  
                 }
-                if (tnormaSempre) {
-                	regra.setTnormaAtual(tnorma);
-                }
+                
+                regra.setTnormaAtual(tnorma);
                 
                 if (tnorma > maiorTnorma){
                     maiorTnorma = tnorma;
                     classificacao = regra.consequente;
-                    posRegraUsada = cont;
                 }
-                cont++;
                
-            }
-            // Só atualiza a tNorma da regra que foi usada para determinar a resposta
-            if (!tnormaSempre) {
-            	this.regras.get(posRegraUsada).setTnormaAtual(maiorTnorma);            	
             }
             
             this.scores.add(maiorTnorma);

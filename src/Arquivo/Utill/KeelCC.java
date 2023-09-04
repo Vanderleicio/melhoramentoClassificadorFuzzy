@@ -44,7 +44,7 @@ public class KeelCC {
     }
     
     public void extrair(String dataset) throws FileNotFoundException, IOException{
-        BufferedReader br = new BufferedReader(new FileReader(dataset));
+    	BufferedReader br = new BufferedReader(new FileReader(dataset));
         while(br.ready()){ 
             String linha = br.readLine();
             String normalizada = Normalizer.normalize(linha, Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "")

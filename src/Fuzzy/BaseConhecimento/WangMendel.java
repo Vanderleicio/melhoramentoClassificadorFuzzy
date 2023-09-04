@@ -26,9 +26,6 @@ public class WangMendel {
     public List<String> variaveis;
     public List<Regra> regras;
     public List<String> nomesDiscretos;
-    public static double diferencaMaxima;
-    public static double utilidadeMinima;
-    public static boolean adaptarPorIdade;
     
     public boolean variavelTeste = false;
     public static boolean tnormaComoFS = false;
@@ -88,11 +85,7 @@ public class WangMendel {
     		Regra r = this.regras.get(i);
     		double forcaAtivacao = (tNormaAcm == 0)? 0: r.tnormaAtual/tNormaAcm;
     		
-    		if (tnormaComoFS) {
-    			r.acumularAtivacao(r.tnormaAtual);
-    		} else {
-    			r.acumularAtivacao(forcaAtivacao);
-    		}
+    		r.acumularAtivacao(forcaAtivacao);
     		
     		r.utilidade = r.ativacaoAcm/(indexAtual - r.indexCriacao);	
     	}
@@ -103,71 +96,54 @@ public class WangMendel {
     	
     	
     	double mediaUtilidade = 0; 
-    	double mediaIdade = 0 ;
     	double desvioUtilidade = 0;
-    	double desvioIdade = 0;
     	
     	int nRegras = this.regras.size();
     	for (Regra r: this.regras){
-    		if (this.variavelTeste) {
-    			System.out.println(r.tnormaAtual);    			
-    		}
     		mediaUtilidade += r.utilidade;
-			mediaIdade += r.getCurrentAge(indexAtual);
     	}
     	
-    	System.out.println("Media uti antes: " + mediaUtilidade);
     	
     	mediaUtilidade = mediaUtilidade / nRegras;
-    	mediaIdade = mediaIdade / nRegras;
-    	
-    	System.out.println("Media uti: " + nRegras);
+ 
     	
     	for (Regra r: this.regras) {
-    		desvioIdade += Math.pow((r.getCurrentAge(indexAtual) - mediaIdade), 2);
     		desvioUtilidade += Math.pow((r.utilidade - mediaUtilidade), 2);
     			
     	}
-    		
-    	desvioIdade = Math.sqrt(desvioIdade/nRegras);
+    	
     	desvioUtilidade = Math.sqrt(desvioUtilidade/nRegras);
     		
-    	parametros[0] = mediaIdade;
+    	parametros[0] = 0;
     	parametros[1] = mediaUtilidade;
-    	parametros[2] = desvioIdade;
+    	parametros[2] = 0;
     	parametros[3] = desvioUtilidade;
     		
     	return parametros;
     }
     
-    public void atualizarBase(int indexAtual) {
-    	if (adaptarPorIdade) {
-    		
-    		//Atualização com base na Idade da Regra
-        	double idadeMedia = 0;
-        	
-        	for( Regra r: this.regras) {
-        		idadeMedia += r.getCurrentAge(indexAtual);
-        	}
-        	idadeMedia = idadeMedia/this.regras.size();
-        	
-        	for (int i = 0; i < this.regras.size(); i++) {
-        		Regra r = this.regras.get(i);
-        		if ((r.getCurrentAge(indexAtual) - idadeMedia) > diferencaMaxima) {
-        			this.regras.remove(i);
-        		}
-        	}
-    	} else {
-    		
-    		//Atualização com base na Utilidade da Regra
-        	for (int i = 0; i < this.regras.size(); i++) {
-        		Regra r = this.regras.get(i);
-        		if (r.utilidade < utilidadeMinima) {
-        			this.regras.remove(i);
-        		}
-        	}
+    public int atualizarBase() {
+    	int contDesc = 0;
+    	double utilidadeMedia = 0;
+    	
+    	for (Regra r: this.regras) {
+    		utilidadeMedia += r.utilidade;
     	}
+    	
+    	utilidadeMedia = utilidadeMedia/this.regras.size();
+		//Atualização com base na Utilidade da Regra
+    	for (int i = 0; i < this.regras.size(); i++) {
+    		Regra r = this.regras.get(i);
+    		if (r.utilidade < utilidadeMedia) {
+    			this.regras.remove(i);
+    			contDesc++;
+    		}
+    	}
+    	
+    	return contDesc;
+    	
     }
+    
     private ConjuntoAtivo conjuntoAtivado(String variavel, double valor, String[] eDiscretas){
     	ArrayList<String> terms = new ArrayList<String>();
     	String[] alfabeto = {

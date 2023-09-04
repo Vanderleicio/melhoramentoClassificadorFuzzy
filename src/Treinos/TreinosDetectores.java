@@ -46,13 +46,13 @@ public class TreinosDetectores {
 		ExcelCC teste2 = new ExcelCC("gMeanMedio-CenarioIncrementa-Utilidade.txt", "ExperimentoIncrementalUtilidade"); 
 		*/
 
-		determinarCenario(3);
+		determinarCenario(2);
 		
 		
 	}
 	
 	public static void determinarCenario(int cenario) throws SecurityException, ClassNotFoundException, RecognitionException, Exception {
-		String caminhoTxt, caminho, nomeCenario;
+		String caminhoTxt, caminho, caminho2, nomeCenario;
 		FileWriter arq, arq1;
 		
 		caminhoTxt = System.getProperty("user.dir") + "\\Resultados";
@@ -65,74 +65,73 @@ public class TreinosDetectores {
 		
 		case 1:
 			//Testar todos os datasets artificiais, com todos os detectores no Fuzzy e no NB
-			nomeCenario = "SemParametrosRangeValores";
+			nomeCenario = "BaseReiniciada";
 			
-			arq = new FileWriter(caminhoTxt + "\\gMeanMedio-" + nomeCenario + ".txt");
-			caminho = "\\DatasetsArtificiais\\Fuzzy\\";
-			
-			WangMendel.adaptarPorIdade = true;
-			WangMendel.diferencaMaxima = 10;
-			
-			for (Metricas metrica: Metricas.values()) {
+			arq = new FileWriter(caminhoTxt + "\\metricasMedias-" + nomeCenario + ".txt");
+			for (int j=0; j <2; j++) {
+				if (j==0) {
+					caminho = "\\DatasetsArtificiais\\Fuzzy\\";
+				}else {
+					caminho = "\\DatasetsReais";
+				}
+				for (Metricas metrica: Metricas.values()) {
 					for (int i=0; i < 6; i++) {
 						if (i <= 2) {
-							ControllerConceptFuzzy.treinar(i, caminho + "Graduais", arq, 0, metrica, nomeCenario);
+							caminho2 = caminho + (j == 1?"":"Graduais");
+							ControllerConceptFuzzy.treinar(i, caminho2, arq, 0, metrica, nomeCenario);
 						} else {
-							ControllerConceptFuzzy.treinar(i, caminho + "Abruptos", arq, 0, metrica, nomeCenario);
+							caminho2 = caminho + (j == 1?"":"Abruptos");
+							ControllerConceptFuzzy.treinar(i, caminho2, arq, 0, metrica, nomeCenario);
 							
 						}
 					}				
-				
+					
+				}
 			}
 			arq.close();
 			break;
 		
 		case 2:
 			//Testar todos os datasets naturais com todos os detectores no Fuzzy;
-			arq1 = new FileWriter(caminhoTxt + "\\gMeanMedio-CenarioIncremental-Idade.txt");
-			caminho = "\\DatasetsArtificiais\\Fuzzy\\";
-			WangMendel.adaptarPorIdade = true;
-			WangMendel.diferencaMaxima = 100;
-			nomeCenario = "IncrementalIdade";
-			for (Metricas metrica: Metricas.values()) {
-				for (int i=0; i < 6; i++) {
-					if (i <= 2) {
-						ControllerConceptFuzzy.treinarIncremental(i, caminho + "Graduais", arq1, 0, metrica, nomeCenario);
-					} else {
-						ControllerConceptFuzzy.treinarIncremental(i, caminho + "Abruptos", arq1, 0, metrica, nomeCenario);
+			String [] cenarios = {"considerandoNovasRegras",  "NAOconsiderando"};
+			for (int k=0; k < 2; k++) {
+				nomeCenario = cenarios[k];
+				arq1 = new FileWriter(caminhoTxt + "\\metricasMedias-" + nomeCenario + ".txt");
+				for (int j=0; j <2; j++) {
+					
+					if (j==0) {
+						caminho = "\\DatasetsArtificiais\\Fuzzy\\";
+					}else {
+						caminho = "\\DatasetsReais";
+					}
+					
+					for (Metricas metrica: Metricas.values()) {
+						for (int i=0; i < 6; i++) {
+							if (i <= 2) {
+								caminho2 = caminho + (j == 1?"":"Graduais");
+								ControllerConceptFuzzy.treinarIncremental(i, caminho2, arq1, k, metrica, nomeCenario);
+							} else {
+								caminho2 = caminho + (j == 1?"":"Abruptos");
+								ControllerConceptFuzzy.treinarIncremental(i, caminho2, arq1, k, metrica, nomeCenario);
+								
+							}
+						}				
 						
 					}
 				}
+				
 			}
-			arq1.close();
-			
-			FileWriter arq2 = new FileWriter(caminhoTxt + "\\gMeanMedio-CenarioIncrementa-Utilidade.txt");
-			WangMendel.adaptarPorIdade = false;
-			WangMendel.utilidadeMinima = 0.01;
-			nomeCenario = "IncrementalUtilidade";
-			for (Metricas metrica: Metricas.values()) {
-				for (int i=0; i < 6; i++) {
-					if (i <= 2) {
-						ControllerConceptFuzzy.treinarIncremental(i, caminho + "Graduais", arq2, 0, metrica, nomeCenario);
-					} else {
-						ControllerConceptFuzzy.treinarIncremental(i, caminho + "Abruptos", arq2, 0, metrica, nomeCenario);
-						
-					}
-				}
-			}
-			arq2.close();
+
 			break;
 			
 		case 3:
 			
 			FileWriter arq3;
-			Classico.tnormaSempre = true;
 			String [] cenarios1 = {"tNormaSempretNormaDesvios",  "tNormaSempretNormaTdsJanelas", "tNormaSempreFSArtigoDesvios", "tNormaSempreFSArtigoTdsJanelas"};
-			String [] cenarios = {"tNormaSempreFSArtigoDesvios", "tNormaSempreFSArtigoTdsJanelas"};
 			Metricas metrica = Metricas.F1SCORE;
 			for (int i = 0; i < 2; i++) {				
-				nomeCenario = cenarios[i];
-				String nomeArq = cenarios[i] + "resultado";
+				nomeCenario = cenarios1[i];
+				String nomeArq = cenarios1[i] + "resultado";
 				arq3 = new FileWriter(caminhoTxt + "\\TreinosParametroUtilidade\\" + nomeArq + ".txt");
 				caminho = "\\DatasetsArtificiais\\Fuzzy\\";
 				
